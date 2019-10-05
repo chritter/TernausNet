@@ -120,6 +120,7 @@ class Interpolate(nn.Module):
         self.align_corners = align_corners
         
     def forward(self, x):
+        # down/up samples the input to either the given size or the given scale_factor
         x = self.interp(x, size=self.size, scale_factor=self.scale_factor, 
                         mode=self.mode, align_corners=self.align_corners)
         return x
