@@ -47,20 +47,26 @@ class UNet11(nn.Module):
         super().__init__()
         self.pool = nn.MaxPool2d(2, 2)
 
+        # loads the VGG11 setup by the authors
+        # downloads weights from hub
         self.encoder = models.vgg11(pretrained=pretrained).features
 
+        # encoder part
+        # add the layers with pre-trained weights to network
         self.relu = self.encoder[1]
         self.conv1 = self.encoder[0]
         self.conv2 = self.encoder[3]
-        self.conv3s = self.encoder[6]
+        self.conv3s = self.encoder[6] #s indicates layers in which number of channels is doubled.
         self.conv3 = self.encoder[8]
         self.conv4s = self.encoder[11]
         self.conv4 = self.encoder[13]
         self.conv5s = self.encoder[16]
-        self.conv5 = self.encoder[18]
+        self.conv5 = self.encoder[18] #512 channel output = num_filters * 8 * 2
 
         self.center = DecoderBlock(num_filters * 8 * 2, num_filters * 8 * 2, num_filters * 8)
-        self.dec5 = DecoderBlock(num_filters * (16 + 8), num_filters * 8 * 2, num_filters * 8)
+
+        # decoder part
+        self.dec5 = DecoderBlock(num_filters * (16 + 8), num_filters * 8 * 2, num_filters * 8) #num_filters*8 input from center block
         self.dec4 = DecoderBlock(num_filters * (16 + 8), num_filters * 8 * 2, num_filters * 4)
         self.dec3 = DecoderBlock(num_filters * (8 + 4), num_filters * 4 * 2, num_filters * 2)
         self.dec2 = DecoderBlock(num_filters * (4 + 2), num_filters * 2 * 2, num_filters)
@@ -80,7 +86,7 @@ class UNet11(nn.Module):
 
         center = self.center(self.pool(conv5))
 
-        dec5 = self.dec5(torch.cat([center, conv5], 1))
+        dec5 = self.dec5(torch.cat([center, conv5], 1)) #concat at axis 1 as this is the channel dimensions in VGG
         dec4 = self.dec4(torch.cat([dec5, conv4], 1))
         dec3 = self.dec3(torch.cat([dec4, conv3], 1))
         dec2 = self.dec2(torch.cat([dec3, conv2], 1))
